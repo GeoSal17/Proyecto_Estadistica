@@ -46,12 +46,14 @@ ui <- dashboardPage(skin = "purple",
                 plotlyOutput("EvolCasos"))
           ),
           fluidRow(
-            box(width = 12, title = "Tabla de resumen de datos", 
+            box(width = 12, title = "Tabla de resumen de datos por sexo y edad", 
                 tableOutput("Resumen"))
           ),
           fluidRow(
             box(width = 12, title = "Cantidad hombres y mujeres contagiados con alguna condición", 
                 plotlyOutput("CasosApilados")),
+            box(width = 12, title = "Tipo de paciente por Sexo", 
+                plotlyOutput("CasosApilados2"))
             #box(width = 12, title = "Tipos de paciente", 
             #    plotlyOutput("TiposPacientes"))
           ),
@@ -216,6 +218,28 @@ server <- function(input, output) {
              xaxis = list(title = "Condición"),
              yaxis = list(title = "Cantidad de Casos"),
              barmode = 'stack')
+  })
+
+ output$CasosApilados2 <- renderPlotly({
+    casos_tipo <- selected_data() %>%
+      filter(SEXO == 1 | SEXO == 2) %>%
+      filter(TIPO_PACIENTE == 1 | TIPO_PACIENTE == 2) %>%
+     # pivot_longer(cols = c(TIPO_PACIENTE),
+     #             names_to = "Tipo de paciente",
+     #             values_to = "Tipo") %>%
+      group_by(TIPO_PACIENTE, SEXO) %>%
+      summarise(casos = n(), .groups = "drop") %>%
+      mutate(SEXO = ifelse(SEXO == 1, "Mujer", "Hombre"),
+             TIPO_PACIENTE = ifelse(TIPO_PACIENTE == 1, "Ambulatorio", "Hospitalizado"))
+    plot_ly(data = casos_tipo,
+            x = ~TIPO_PACIENTE,
+            y = ~casos,
+            color = ~SEXO,
+            type = 'bar') %>%
+      layout(
+        xaxis = list(title = "Tipo de paciente"),
+        yaxis = list(title = "Cantidad de Casos"),
+        barmode = 'stack')
   })
   
   # output$TiposPacientes <- renderPlotly({
